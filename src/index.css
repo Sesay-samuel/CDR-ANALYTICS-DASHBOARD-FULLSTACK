@@ -1,0 +1,47 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+
+@theme inline { --font-sans:'Geist Variable',sans-serif; }
+
+:root { font-family:'Geist Variable',sans-serif; color:#e8f0ff; background:#050914; }
+* { box-sizing:border-box; }
+html { background:#050914; }
+body {
+  margin:0; min-width:320px; min-height:100vh; color:#e8f0ff;
+  background:
+    radial-gradient(ellipse 58% 42% at 82% 8%, rgba(0,229,255,.14), transparent 62%),
+    radial-gradient(ellipse 48% 38% at 36% 92%, rgba(217,70,239,.12), transparent 65%),
+    radial-gradient(circle at 58% 42%, rgba(56,189,248,.055), transparent 28rem),
+    linear-gradient(135deg,#050914 0%,#081321 46%,#0c0a1c 100%);
+  background-attachment:fixed;
+}
+body::before {
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.24; z-index:-1;
+  background-image:linear-gradient(rgba(125,211,252,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(125,211,252,.055) 1px,transparent 1px);
+  background-size:46px 46px;
+  mask-image:linear-gradient(to bottom,black,transparent 82%);
+}
+button,input,select { font:inherit; }
+button { cursor:pointer; }
+::selection { background:#22d3ee; color:#06111f; }
+
+.glass-card {
+  background:linear-gradient(145deg,rgba(12,24,39,.82),rgba(9,15,30,.68));
+  border:1px solid rgba(103,232,249,.14);
+  box-shadow:0 20px 55px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.035);
+  backdrop-filter:blur(18px);
+}
+.soft-panel {
+  background:linear-gradient(145deg,rgba(15,28,46,.88),rgba(9,17,31,.78));
+  border:1px solid rgba(103,232,249,.13);
+  box-shadow:0 18px 45px rgba(0,0,0,.25);
+}
+.gradient-text {
+  background:linear-gradient(90deg,#67e8f9,#a78bfa,#f0abfc);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+input,select { color-scheme:dark; }
+.recharts-cartesian-grid line { stroke:rgba(148,163,184,.14); }
+.recharts-text { fill:#94a3b8; }
