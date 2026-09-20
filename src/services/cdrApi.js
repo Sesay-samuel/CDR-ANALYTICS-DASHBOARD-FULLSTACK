@@ -1,5 +1,9 @@
 
-const CDR_API_URL = "http://localhost:4000/api/cdr";
+const API_BASE_URL = import.meta.env.DEV
+  ? "http://localhost:4000"
+  : "";
+
+const CDR_API_URL = `${API_BASE_URL}/api/cdr`;
 
 export const fetchCDRRecords = async () => {
   const response = await fetch(CDR_API_URL);

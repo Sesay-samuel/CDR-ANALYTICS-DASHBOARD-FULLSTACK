@@ -3,12 +3,14 @@ const cors = require("cors");
 const express = require("express");
 
 const app = express();
-const PORT = 4000;
+const PORT = process.env.PORT || 4000;
 
-app.use(cors({
-  origin: "http://localhost:5173"
-}));
-
+// Allow requests from the local React frontend
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
 
 // Allow the server to read JSON requests
 app.use(express.json());
@@ -34,7 +36,7 @@ const cdrRecords = [
     callStatus: true,
     callDirection: "Outgoing",
     callStartTime: "2026-09-19T10:00:00Z",
-    callEndTime: "2026-09-19T10:02:00Z"
+    callEndTime: "2026-09-19T10:02:00Z",
   },
   {
     id: "2",
@@ -47,8 +49,8 @@ const cdrRecords = [
     callStatus: false,
     callDirection: "Incoming",
     callStartTime: "2026-09-19T11:00:00Z",
-    callEndTime: "2026-09-19T11:00:45Z"
-  }
+    callEndTime: "2026-09-19T11:00:45Z",
+  },
 ];
 
 // Return all CDR records
@@ -56,7 +58,12 @@ app.get("/api/cdr", (req, res) => {
   res.status(200).json(cdrRecords);
 });
 
-// Start the backend server
-app.listen(PORT, () => {
-  console.log(`Backend running at http://localhost:${PORT}`);
-});
+// Start the server only when this file is run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Backend running at http://localhost:${PORT}`);
+  });
+}
+
+// Export the Express app for deployment
+module.exports = app;
