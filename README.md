@@ -1,53 +1,76 @@
 
 # CDR Analytics Dashboard
 
-A full-stack Call Detail Record (CDR) analytics dashboard built with React, Vite, and an Express.js API backend.
+A full-stack Call Detail Record (CDR) analytics application built with React, Vite, Node.js, Express, and PostgreSQL.
 
-The application displays call records and transforms CDR data into KPI summaries, call-duration analytics, cost analytics, call activity timelines, city analytics, and detailed recent-call tables.
+The application provides a protected dashboard for exploring call records, monitoring call activity, and analysing call duration, cost, status, and geographic patterns.
+
+## Project Status
+
+- **Local application:** Working and tested.
+- **Database:** Neon PostgreSQL, populated with 10,000 CDR records.
+- **Authentication:** Email/password login with bcrypt password verification and JWT-protected CDR access.
+- **Full-stack Vercel deployment:** Pending production configuration and testing.
 
 ## Live Demo
 
-**Existing Netlify demo:** https://samuel-cdr-analytics-dashboard.netlify.app
+**Previous Netlify demo:** https://samuel-cdr-analytics-dashboard.netlify.app
 
-**Full-stack Vercel deployment:** Pending deployment.
+**Full-stack Vercel demo:** Coming soon.
 
-> The Netlify link is for the existing deployment and may not reflect the latest full-stack application. The Express backend currently runs locally. The frontend and backend must both be configured for production before the full-stack deployment is complete.
+> The Netlify demo is an earlier deployment and may not include the PostgreSQL database, JWT authentication, or latest application changes. The full-stack application has been tested locally but has not yet been verified on Vercel.
 
 ## Screenshot
 
 ![CDR Analytics Dashboard](docs/dashboard-preview.png)
 
-> Replace `docs/dashboard-preview.png` with a screenshot of the latest dashboard before submitting the project.
+> Update `docs/dashboard-preview.png` with a screenshot of the latest application before submission.
 
 ## Features
 
-### Dashboard and Analytics
+### Authentication
 
-- KPI cards for total calls, total call cost, average call duration, successful calls, and failed calls.
-- Call-duration insights, including longest, shortest, and average call duration.
-- Call-cost analytics, including total cost by city and average cost per call.
-- Call activity timeline showing calls per day.
+- Email and password sign-in.
+- Password hashes stored in PostgreSQL using bcrypt.
+- JWT issued after successful authentication.
+- Protected CDR endpoint requiring a valid bearer token.
+- Logout and expired-session handling in the frontend.
+
+### Dashboard
+
+- Total calls.
+- Total call cost.
+- Average call duration.
+- Successful and failed call counts.
+- Daily call activity timeline.
 - Call status distribution.
 - Top cities by call volume.
-- Recent call records displayed in a detailed table.
+- Search and filtering by call direction, status, and date range.
 
 ### Call Records
 
 - Caller name and phone number.
 - Receiver phone number.
 - City.
-- Call direction: Incoming or Outgoing.
-- Call status: Successful or Failed.
+- Incoming or outgoing call direction.
+- Successful or failed call status.
 - Call duration and cost.
 - Call start time.
-- Search and filtering by call direction, status, and date range.
+- Detailed call-record view.
+
+### Analytics
+
+- Longest, shortest, and average call duration.
+- Call volume by city.
+- Call status distribution.
+- Call-cost insights.
 
 ### User Experience
 
 - Responsive dashboard layout.
-- Sidebar navigation between Dashboard, Call Records, and Analytics.
-- Loading indicators while retrieving API data.
-- Error messages when API requests fail.
+- Navigation between Dashboard, Call Records, and Analytics.
+- Loading indicators and API error messages.
+- Protected dashboard access after login.
 
 ## Technology Stack
 
@@ -55,63 +78,52 @@ The application displays call records and transforms CDR data into KPI summaries
 | --- | --- |
 | Frontend | React 19, Vite 8 |
 | Styling | Tailwind CSS 4 |
-| UI components | shadcn-style components |
+| UI | shadcn-style components |
 | Charts | Recharts |
 | Icons | Lucide React |
 | Backend | Node.js, Express.js |
-| API communication | HTTP and JSON |
+| Database | PostgreSQL, hosted on Neon |
+| Database client | `pg` |
+| Authentication | JWT, `bcryptjs` |
+| Data import | Excel (`xlsx`) |
 | Version control | Git and GitHub |
-| Frontend hosting | Netlify; Vercel deployment planned |
+| Planned full-stack hosting | Vercel |
 
 ## Project Structure
 
 ```text
 CDR-ANALYTICS-DASHBOARD-FULLSTACK/
-|
+├── api/
+│   └── index.cjs                 # Vercel API entry point
 ├── backend/
+│   ├── data/
+│   │   └── mock_call_records_10000.xlsx
+│   ├── create-table.js           # Database table setup
+│   ├── create-user.js            # Initial user creation
+│   ├── db.js                     # PostgreSQL connection
+│   ├── import-cdr.js             # CDR import utility
+│   ├── import-neon.js            # Neon import utility
+│   ├── server.js                 # Express API and authentication
 │   ├── package.json
-│   ├── package-lock.json
-│   └── server.js
-|
+│   └── package-lock.json
 ├── docs/
 │   └── dashboard-preview.png
-|
 ├── public/
-│   ├── favicon.svg
-│   └── icons.svg
-|
 ├── src/
-│   ├── assets/
-│   |
 │   ├── components/
-│   │   ├── ui/
-│   │   │   ├── button.jsx
-│   │   │   ├── card.jsx
-│   │   │   └── table.jsx
-│   │   ├── CallsChart.jsx
-│   │   ├── Filters.jsx
-│   │   ├── Header.jsx
-│   │   ├── RecentCalls.jsx
-│   │   ├── Sidebar.jsx
-│   │   └── StatCard.jsx
-│   |
 │   ├── lib/
 │   │   ├── callUtils.js
 │   │   └── utils.js
-│   |
 │   ├── pages/
 │   │   ├── AnalyticsPage.jsx
 │   │   ├── CallRecordsPage.jsx
 │   │   └── DashboardPage.jsx
-│   |
 │   ├── services/
 │   │   └── cdrApi.js
-│   |
-│   ├── App.css
 │   ├── App.jsx
+│   ├── App.css
 │   ├── index.css
 │   └── main.jsx
-|
 ├── .gitignore
 ├── README.md
 ├── index.html
@@ -121,9 +133,41 @@ CDR-ANALYTICS-DASHBOARD-FULLSTACK/
 └── vercel.json
 ```
 
+> Local `.env` files and `node_modules` are excluded from Git. Do not commit database credentials, JWT secrets, or administrator passwords.
+
+## Database
+
+The application uses PostgreSQL to store call records and user accounts.
+
+### CDR Records
+
+The `cdr_records` table contains **10,000 imported records** from the supplied Excel dataset.
+
+The API returns records with these fields:
+
+| Field | Description |
+| --- | --- |
+| `id` | Unique record identifier |
+| `callerName` | Caller name |
+| `callerNumber` | Caller phone number |
+| `receiverNumber` | Receiver phone number |
+| `city` | City associated with the call |
+| `callDirection` | Boolean direction value, formatted for display |
+| `callStatus` | Boolean status value, formatted for display |
+| `callDuration` | Duration in seconds |
+| `callCost` | Call cost |
+| `callStartTime` | Call start timestamp |
+| `callEndTime` | Call end timestamp |
+
+The frontend uses `src/lib/callUtils.js` to format these values.
+
+### Users
+
+The `users` table stores account email addresses and bcrypt password hashes. Plain-text passwords are not stored in the database.
+
 ## API
 
-The application includes an Express backend that runs locally at:
+The local Express API runs at:
 
 ```text
 http://localhost:4000
@@ -135,176 +179,171 @@ http://localhost:4000
 GET /api/health
 ```
 
-Local URL:
+Used to check whether the backend is running.
 
-```text
-http://localhost:4000/api/health
+### Login
+
+```http
+POST /api/login
+Content-Type: application/json
 ```
 
-Expected response:
+Request body:
 
 ```json
 {
-  "success": true,
-  "message": "CDR Analytics Backend is running"
+  "email": "your-email@example.com",
+  "password": "your-password"
 }
 ```
 
+A successful login returns a JWT that the frontend uses for subsequent protected requests.
+
 ### CDR Records
 
-The frontend retrieves CDR records through the API service defined in:
-
-```text
-src/services/cdrApi.js
+```http
+GET /api/cdr
+Authorization: Bearer <JWT>
 ```
 
-The Express backend also contains sample CDR records for local testing.
+The endpoint queries PostgreSQL and returns CDR records as JSON. Requests with a missing, invalid, or expired token are rejected.
 
-The original assignment supplied the following MockAPI endpoint:
-
-```text
-https://69b30b45e224ec066bdb55a0.mockapi.io/api/v1/cdr
-```
-
-The production data source should be confirmed when configuring the deployed backend.
-
-### CDR Data Fields
-
-The dashboard works with the following call-record fields:
-
-| Field | Description |
-| --- | --- |
-| `id` | Unique record identifier |
-| `callerName` | Name of the caller |
-| `callerNumber` | Caller's phone number |
-| `receiverNumber` | Receiver's phone number |
-| `city` | City associated with the record |
-| `callDirection` | Incoming or outgoing call |
-| `callStatus` | Successful or failed call |
-| `callDuration` | Call duration in seconds |
-| `callCost` | Cost of the call |
-| `callStartTime` | Call start timestamp |
-| `callEndTime` | Call end timestamp |
-
-The application uses helper functions in `src/lib/callUtils.js` to format call direction, status, duration, cost, and timestamps for display.
+The frontend API client is implemented in `src/services/cdrApi.js`.
 
 ## Run Locally
 
 ### Prerequisites
 
-Install the following:
-
 - Node.js and npm.
 - Git.
-- Visual Studio Code or another code editor.
+- A PostgreSQL database, such as a Neon database.
+- A code editor, such as Visual Studio Code.
 
 ### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/Sesay-samuel/CDR-ANALYTICS-DASHBOARD-FULLSTACK.git
-
 cd CDR-ANALYTICS-DASHBOARD-FULLSTACK
 ```
 
-### 2. Start the Backend
+### 2. Install Dependencies
 
-Open a terminal in the project directory:
+Install the frontend dependencies from the project root:
+
+```bash
+npm install
+```
+
+Then install the backend dependencies:
 
 ```bash
 cd backend
-
 npm install
+```
 
+### 3. Configure Environment Variables
+
+Create the local backend environment files required by `backend/db.js` and `backend/server.js`.
+
+Configure the PostgreSQL connection, JWT secret, and administrator account settings using the environment variable names expected by those files.
+
+For initial account creation, `backend/create-user.js` reads:
+
+```text
+ADMIN_EMAIL
+ADMIN_PASSWORD
+```
+
+Use a strong administrator password of at least 12 characters.
+
+> Never commit `.env` files, passwords, connection strings, or JWT secrets. The required production values must be configured separately in the deployment platform.
+
+### 4. Prepare the Database
+
+Create the database tables using the project's setup script, if they have not already been created:
+
+```bash
+node create-table.js
+```
+
+Import the CDR dataset using the appropriate import script for your configured database.
+
+Create the initial user:
+
+```bash
+node create-user.js
+```
+
+> The user-creation script should only be run when the account does not already exist.
+
+### 5. Start the Backend
+
+From the `backend` directory:
+
+```bash
 node server.js
 ```
 
-When the server starts successfully, the terminal should display:
-
-```text
-Backend running at http://localhost:4000
-```
-
-Test the backend in your browser:
+Check the health endpoint:
 
 http://localhost:4000/api/health
 
-Keep this terminal running.
+Keep the backend terminal running.
 
-### 3. Start the Frontend
+### 6. Start the Frontend
 
-Open a second terminal in the project root.
-
-Install the frontend dependencies:
-
-```bash
-npm install
-```
-
-Start the Vite development server:
+Open a second terminal in the project root:
 
 ```bash
 npm run dev
 ```
 
-Open the local URL printed by Vite, normally:
+Open the URL shown by Vite, normally:
 
 http://localhost:5173
 
-The frontend and backend must both be running for the locally configured full-stack application to work.
+Sign in using the account created in PostgreSQL. The frontend retrieves the CDR records using the JWT returned by the login endpoint.
 
 ## Production Build
 
-From the project root, run:
+From the project root:
 
 ```bash
 npm run build
 ```
 
-The production frontend files are generated in:
+The production frontend is generated in `dist/`.
 
-```text
-dist/
-```
-
-To preview the production build locally:
+To preview the frontend build locally:
 
 ```bash
 npm run preview
 ```
 
-## Deployment
+> A successful frontend build does not, by itself, verify the production API or database connection.
 
-### Frontend Deployment
+## Vercel Deployment
 
-The React/Vite frontend can be deployed to Netlify or Vercel using the following build settings:
+The repository includes:
 
-| Setting | Value |
-| --- | --- |
-| Repository | `CDR-ANALYTICS-DASHBOARD-FULLSTACK` |
-| Branch | `main` |
-| Framework | Vite |
-| Root directory | Project root |
-| Build command | `npm run build` |
-| Output directory | `dist` |
+- `api/index.cjs` as the Vercel API entry point.
+- `vercel.json` with the Vite build settings and API rewrites.
 
-### Backend Deployment
+The intended deployment serves the frontend and Express API from the same Vercel project. The frontend uses relative `/api` URLs in production.
 
-The Express backend must be deployed separately or adapted to a supported serverless environment.
+Before marking the deployment as complete:
 
-The current local backend address, `http://localhost:4000`, cannot be used as a public production API endpoint.
+1. Configure the required database and authentication environment variables in Vercel.
+2. Deploy the latest `main` branch.
+3. Verify the deployed `/api/health` endpoint.
+4. Test login using the deployed application.
+5. Confirm that authenticated `/api/cdr` requests retrieve the PostgreSQL records.
+6. Verify the Dashboard, Call Records, and Analytics pages.
+7. Add the verified Vercel URL to the **Live Demo** section above.
 
-Before publishing the full-stack application:
-
-1. Configure a production-accessible backend.
-2. Update the frontend API configuration to use the deployed backend URL.
-3. Configure CORS to allow the deployed frontend origin.
-4. Test the API and dashboard on the deployed site.
-
-> The presence of `vercel.json` does not, by itself, deploy the Express backend. Production deployment must be tested before marking the full-stack application as live.
+**Deployment status: Pending verification.**
 
 ## GitHub Repository
-
-Source code:
 
 https://github.com/Sesay-samuel/CDR-ANALYTICS-DASHBOARD-FULLSTACK
 
