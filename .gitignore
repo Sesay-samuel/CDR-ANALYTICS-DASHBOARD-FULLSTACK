@@ -30,3 +30,8 @@ dist-ssr
 
 # Backend build output
 backend/dist/
+
+backend/cdr-records-export.csv
+
+# Original CDR dataset
+backend/data/

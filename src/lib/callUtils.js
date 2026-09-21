@@ -1,16 +1,16 @@
 
-export const getDirection = (call) => {
-  const direction = String(call?.callDirection ?? "")
-    .trim()
-    .toLowerCase();
+  export const getDirection = (call) => {
+  const direction = call?.callDirection;
 
-  if (direction === "incoming") {
-    return "Incoming";
-  }
+  // Direction values from the PostgreSQL records
+  if (direction === true) return "Incoming";
+  if (direction === false) return "Outgoing";
 
-  if (direction === "outgoing") {
-    return "Outgoing";
-  }
+  // Also support the original sample API records
+  const text = String(direction ?? "").trim().toLowerCase();
+
+  if (text === "incoming") return "Incoming";
+  if (text === "outgoing") return "Outgoing";
 
   return "Unknown";
 };
