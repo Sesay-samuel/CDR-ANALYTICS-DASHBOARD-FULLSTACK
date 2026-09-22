@@ -59,7 +59,7 @@ app.post("/api/login", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT id, email, password_hash FROM users WHERE email = $1",
+      "SELECT id, email, password_hash, role FROM users WHERE email = $1",
       [email]
     );
 
@@ -98,9 +98,10 @@ app.post("/api/login", async (req, res) => {
       message: "Login successful",
       token,
       user: {
-        id: user.id,
-        email: user.email,
-      },
+            id: user.id,
+            email: user.email,
+            role: user.role,
+},
     });
   } catch (error) {
     console.error("Login failed:", error.message);
@@ -116,7 +117,7 @@ app.post("/api/login", async (req, res) => {
 // Middleware: Verify JWT
 // -----------------------------------------------------
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const authorization = req.headers.authorization || "";
   const [scheme, token, extra] = authorization.split(" ");
 
@@ -136,31 +137,76 @@ function requireAuth(req, res, next) {
     });
   }
 
+  let payload;
+
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET, {
+    payload = jwt.verify(token, process.env.JWT_SECRET, {
       algorithms: ["HS256"],
     });
-
-    req.user = {
-      id: payload.sub,
-    };
-
-    return next();
   } catch (error) {
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token",
     });
   }
-}
 
+  if (!payload.sub || !/^\d+$/.test(String(payload.sub))) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid token",
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      "SELECT id, role FROM users WHERE id = $1",
+      [payload.sub]
+    );
+
+    const user = result.rows[0];
+
+    if (!user || !["admin", "analyst"].includes(user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
+
+    req.user = {
+      id: String(user.id),
+      role: user.role,
+    };
+
+    return next();
+  } catch (error) {
+    console.error("Authentication lookup failed:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Authentication is temporarily unavailable",
+    });
+  }
+}
+                                    
+function requireRole(...allowedRoles) {
+  return (req, res, next) => {
+    if (!req.user || !allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to access this resource",
+      });
+    }
+
+    return next();
+  };
+}
 // -----------------------------------------------------
 // Protected: Fetch all CDR records
 // -----------------------------------------------------
 
 // Keep this endpoint unchanged for the existing React dashboard.
 
-app.get("/api/cdr", requireAuth, async (req, res) => {
+app.get("/api/cdr", requireAuth, requireRole("admin"), async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT
@@ -204,7 +250,7 @@ app.get("/api/cdr", requireAuth, async (req, res) => {
 // from (YYYY-MM-DD)
 // to (YYYY-MM-DD)
 
-app.get("/api/cdr/paginated", requireAuth, async (req, res) => {
+app.get("/api/cdr/paginated", requireAuth, requireRole("admin"), async (req, res) => {
   // Read pagination parameters.
   const page = Number(req.query.page ?? 1);
   const limit = Number(req.query.limit ?? 50);
@@ -390,7 +436,7 @@ app.get("/api/cdr/paginated", requireAuth, async (req, res) => {
 // GET /api/analytics/summary
 // Calculate overall statistics and top callers in PostgreSQL.
 
-app.get("/api/analytics/summary", requireAuth, async (req, res) => {
+app.get("/api/analytics/summary", requireAuth, requireRole("admin", "analyst"), async (req, res) => {
   try {
     const summaryResult = await pool.query(`
       SELECT

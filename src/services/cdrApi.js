@@ -57,3 +57,41 @@ export const fetchCDRRecords = async (token) => {
 
   return data;
 };
+
+
+const ANALYTICS_API_URL = `${API_BASE_URL}/api/analytics/summary`;
+
+// Fetch view-only analytics for Admin and Analyst.
+export const fetchAnalyticsSummary = async (token) => {
+  if (!token) {
+    throw new Error("Please log in to view analytics");
+  }
+
+  const response = await fetch(ANALYTICS_API_URL, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.status === 401) {
+    throw new Error(
+      "Your session is invalid or has expired. Please log in again."
+    );
+  }
+
+  if (response.status === 403) {
+    throw new Error("You do not have permission to view analytics.");
+  }
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch analytics: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.success || !data.analytics) {
+    throw new Error("Invalid analytics API response");
+  }
+
+  return data.analytics;
+};

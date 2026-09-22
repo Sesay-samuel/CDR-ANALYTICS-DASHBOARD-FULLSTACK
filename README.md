@@ -1,93 +1,129 @@
+
 # CDR Analytics Dashboard
 
 A full-stack Call Detail Record (CDR) analytics application built with React, Vite, Node.js, Express, and PostgreSQL.
 
 The application provides a secure dashboard for exploring call records, monitoring call activity, and analysing call duration, cost, status, and geographic patterns.
 
+It supports role-based access control (RBAC) for two user types: **Admin** and **Analyst**.
+
 ## Project Status
 
-* **Local application:** Working and tested.
-* **Database:** Neon PostgreSQL, populated with 10,000 CDR records.
-* **Authentication:** Email/password login with bcrypt password verification and JWT-protected CDR access.
-* **Full-stack deployment:** Deployed and tested on Vercel.
-* **Production verification:** Login, API connectivity, and dashboard access confirmed.
+- **Local application:** Working and tested.
+- **Database:** Neon PostgreSQL, populated with 10,000 CDR records.
+- **Authentication:** Email/password login with bcrypt password verification and JWT authentication.
+- **Role-based access:** Admin and Analyst roles implemented and tested locally.
+- **Full-stack deployment:** Earlier application version deployed and tested on Vercel.
+- **Latest RBAC deployment:** Pending GitHub push and production verification.
 
 ## Live Demo
 
-**Full-stack Vercel application:** https://cdr-analytics-dashboard-fullstack.vercel.app/
+**Full-stack Vercel application:**
 
-**Previous Netlify demo:** https://samuel-cdr-analytics-dashboard.netlify.app/
+https://cdr-analytics-dashboard-fullstack.vercel.app/
 
-> The Vercel application is the current full-stack version. The Netlify link is an earlier demo and may not include the PostgreSQL database, JWT authentication, or latest application changes.
+**Previous Netlify demo:**
+
+https://samuel-cdr-analytics-dashboard.netlify.app/
+
+> The Vercel application is the current full-stack deployment. The Netlify link is an earlier demo and may not include the PostgreSQL database, JWT authentication, or latest application changes.
+>
+> The Admin/Analyst changes described below have been tested locally. They must still be deployed and verified on Vercel.
 
 ## Screenshot
 
 ![CDR Analytics Dashboard](docs/dashboard-preview.png)
 
-> Replace `docs/dashboard-preview.png` with a screenshot of the latest deployed dashboard before submission, if the existing image is outdated.
+> Replace `docs/dashboard-preview.png` with a screenshot of the latest deployed dashboard before submission if the existing image is outdated.
 
 ## Features
 
 ### Authentication
 
-* Email and password sign-in.
-* Password hashes stored in PostgreSQL using bcrypt.
-* JWT issued after successful authentication.
-* Protected CDR endpoint requiring a valid bearer token.
-* Logout and expired-session handling in the frontend.
+- Email and password sign-in.
+- Password hashes stored in PostgreSQL using bcrypt.
+- JWT issued after successful authentication.
+- User role included in the successful login response.
+- Backend verification of JWTs for protected endpoints.
+- Role-based API permissions using the user's current database role.
+- Logout and expired-session handling in the frontend.
 
-### Dashboard
+### Role-Based Access Control
 
-* Total calls.
-* Total call cost.
-* Average call duration.
-* Successful and failed call counts.
-* Daily call activity timeline.
-* Call status distribution.
-* Top cities by call volume.
-* Search and filtering by call direction, status, and date range.
+The application supports two roles.
 
-### Call Records
+| Role | Access |
+| --- | --- |
+| Admin | Full access to the existing dashboard, raw CDR records, paginated CDR records, and analytics APIs. |
+| Analyst | View-only access to aggregated call analytics. Raw CDR record endpoints are restricted. |
 
-* Caller name and phone number.
-* Receiver phone number.
-* City.
-* Incoming or outgoing call direction.
-* Successful or failed call status.
-* Call duration and cost.
-* Call start time.
-* Detailed call-record view.
+The backend enforces access permissions. Hiding frontend navigation alone is not used as a security control.
 
-### Analytics
+When a validly authenticated user requests an endpoint outside their permitted role, the backend responds with **HTTP 403 Forbidden**.
 
-* Longest, shortest, and average call duration.
-* Call volume by city.
-* Call status distribution.
-* Call-cost insights.
+### Admin Dashboard
+
+- Total calls.
+- Total call cost.
+- Average call duration.
+- Successful and failed call counts.
+- Daily call activity timeline.
+- Call status distribution.
+- Top cities by call volume.
+- Search and filtering by call direction, status, and date range.
+
+### Call Records — Admin
+
+- Caller name and phone number.
+- Receiver phone number.
+- City.
+- Incoming or outgoing call direction.
+- Successful or failed call status.
+- Call duration and cost.
+- Call start time.
+- Detailed call-record view.
+
+### Analyst Analytics — View Only
+
+The Analyst page retrieves aggregated data from the protected analytics API rather than fetching raw CDR records.
+
+It displays:
+
+- Total calls.
+- Total call duration in seconds.
+- Incoming call count.
+- Outgoing call count.
+- Top callers and their call counts.
+- A Log out button.
+
+The Analyst cannot access the Admin-only raw CDR endpoint.
 
 ### User Experience
 
-* Responsive dashboard layout.
-* Navigation between Dashboard, Call Records, and Analytics.
-* Loading indicators and API error messages.
-* Protected dashboard access after login.
+- Responsive dashboard layout.
+- Admin navigation between Dashboard, Call Records, and Analytics.
+- Dedicated view-only analytics page for Analyst.
+- Loading indicators and API error messages.
+- Protected application access after login.
+- Logout for both roles.
 
 ## Technology Stack
 
-| Layer              | Technology                 |
-| ------------------ | -------------------------- |
-| Frontend           | React 19, Vite 8           |
-| Styling            | Tailwind CSS 4             |
-| UI                 | shadcn-style components    |
-| Charts             | Recharts                   |
-| Icons              | Lucide React               |
-| Backend            | Node.js, Express.js        |
-| Database           | PostgreSQL, hosted on Neon |
-| Database client    | `pg`                       |
-| Authentication     | JWT, `bcryptjs`            |
-| Data import        | Excel (`xlsx`)             |
-| Version control    | Git and GitHub             |
-| Full-stack hosting | Vercel                     |
+| Layer | Technology |
+| --- | --- |
+| Frontend | React 19, Vite 8 |
+| Styling | Tailwind CSS 4 |
+| UI | shadcn-style components |
+| Charts | Recharts |
+| Icons | Lucide React |
+| Backend | Node.js, Express.js |
+| Database | PostgreSQL, hosted on Neon |
+| Database client | `pg` |
+| Authentication | JWT, `bcryptjs` |
+| Access control | Admin/Analyst RBAC |
+| Data import | Excel (`xlsx`) |
+| Version control | Git and GitHub |
+| Full-stack hosting | Vercel |
 
 ## Project Structure
 
@@ -98,12 +134,13 @@ CDR-ANALYTICS-DASHBOARD-FULLSTACK/
 ├── backend/
 │   ├── data/
 │   │   └── mock_call_records_10000.xlsx
-│   ├── create-table.js          # Database table setup
+│   ├── create-analyst.js        # Analyst account creation
+│   ├── create-table.js          # CDR database table setup
 │   ├── create-user.js           # Initial user creation
 │   ├── db.js                    # PostgreSQL connection
 │   ├── import-cdr.js            # CDR import utility
 │   ├── import-neon.js           # Neon import utility
-│   ├── server.js                # Express API and authentication
+│   ├── server.js                # Express API, JWT authentication, RBAC
 │   ├── package.json
 │   └── package-lock.json
 ├── docs/
@@ -133,7 +170,7 @@ CDR-ANALYTICS-DASHBOARD-FULLSTACK/
 └── vercel.json
 ```
 
-> Local `.env` files and `node_modules` are excluded from Git. Do not commit database credentials, JWT secrets, or administrator passwords.
+> Local `.env` files and `node_modules` must be excluded from Git. Do not commit database credentials, JWT secrets, or account passwords.
 
 ## Database
 
@@ -145,29 +182,53 @@ The `cdr_records` table contains **10,000 imported records** from the supplied E
 
 The API returns records with these fields:
 
-| Field            | Description                                    |
-| ---------------- | ---------------------------------------------- |
-| `id`             | Unique record identifier                       |
-| `callerName`     | Caller name                                    |
-| `callerNumber`   | Caller phone number                            |
-| `receiverNumber` | Receiver phone number                          |
-| `city`           | City associated with the call                  |
-| `callDirection`  | Boolean direction value, formatted for display |
-| `callStatus`     | Boolean status value, formatted for display    |
-| `callDuration`   | Duration in seconds                            |
-| `callCost`       | Call cost                                      |
-| `callStartTime`  | Call start timestamp                           |
-| `callEndTime`    | Call end timestamp                             |
+| Field | Description |
+| --- | --- |
+| `id` | Unique record identifier |
+| `callerName` | Caller name |
+| `callerNumber` | Caller phone number |
+| `receiverNumber` | Receiver phone number |
+| `city` | City associated with the call |
+| `callDirection` | Boolean direction value, formatted for display |
+| `callStatus` | Boolean status value, formatted for display |
+| `callDuration` | Duration in seconds |
+| `callCost` | Call cost |
+| `callStartTime` | Call start timestamp |
+| `callEndTime` | Call end timestamp |
 
 The frontend uses `src/lib/callUtils.js` to format these values.
 
 ### Users
 
-The `users` table stores account email addresses and bcrypt password hashes. Plain-text passwords are not stored in the database.
+The `users` table stores account details and role assignments.
+
+| Column | Purpose |
+| --- | --- |
+| `id` | Unique user identifier |
+| `email` | User email address |
+| `password_hash` | bcrypt password hash |
+| `role` | `admin` or `analyst` |
+| `created_at` | Account creation timestamp |
+
+Plain-text passwords are not stored in the database.
+
+The `role` column was added to the existing database with `analyst` as its default. The existing administrator account was assigned the `admin` role.
 
 ## API
 
 The Express API runs locally at `http://localhost:4000` and is available through the deployed application's `/api` routes.
+
+### API Permissions
+
+| Endpoint | Admin | Analyst |
+| --- | --- | --- |
+| `GET /api/health` | Public | Public |
+| `POST /api/login` | Public | Public |
+| `GET /api/cdr` | Allowed | 403 Forbidden |
+| `GET /api/cdr/paginated` | Allowed | 403 Forbidden |
+| `GET /api/analytics/summary` | Allowed | Allowed |
+
+Other analytics routes should be checked for equivalent role protection before production release.
 
 ### Health Check
 
@@ -175,7 +236,9 @@ The Express API runs locally at `http://localhost:4000` and is available through
 GET /api/health
 ```
 
-**Live endpoint:** https://cdr-analytics-dashboard-fullstack.vercel.app/api/health
+**Live endpoint:**
+
+https://cdr-analytics-dashboard-fullstack.vercel.app/api/health
 
 This public endpoint checks whether the backend is running.
 
@@ -204,16 +267,57 @@ Request body:
 }
 ```
 
-A successful login returns a JWT that the frontend uses for subsequent protected requests.
+A successful login returns a JWT and the authenticated user's role.
 
-### CDR Records
+Example response structure:
+
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "token": "<JWT>",
+  "user": {
+    "id": "1",
+    "email": "your-email@example.com",
+    "role": "admin"
+  }
+}
+```
+
+An Analyst login returns `"role": "analyst"`.
+
+> Treat JWTs as credentials. Do not include real tokens in screenshots, logs, or the repository.
+
+### Raw CDR Records — Admin Only
 
 ```http
 GET /api/cdr
 Authorization: Bearer <JWT>
 ```
 
-The endpoint queries PostgreSQL and returns CDR records as JSON. Requests with a missing, invalid, or expired token are rejected.
+This endpoint queries PostgreSQL and returns CDR records as JSON.
+
+An Analyst attempting to access this endpoint receives HTTP 403 Forbidden.
+
+### Paginated CDR Records — Admin Only
+
+```http
+GET /api/cdr/paginated?page=1&limit=50
+Authorization: Bearer <JWT>
+```
+
+The endpoint supports pagination and optional filtering, including city and date parameters.
+
+The pagination endpoint has been tested locally against the 10,000-record dataset.
+
+### Analytics Summary — Admin and Analyst
+
+```http
+GET /api/analytics/summary
+Authorization: Bearer <JWT>
+```
+
+This endpoint returns aggregated call analytics used by the Analyst page.
 
 The frontend API client is implemented in `src/services/cdrApi.js`.
 
@@ -221,10 +325,10 @@ The frontend API client is implemented in `src/services/cdrApi.js`.
 
 ### Prerequisites
 
-* Node.js and npm.
-* Git.
-* A PostgreSQL database, such as a Neon database.
-* A code editor, such as Visual Studio Code.
+- Node.js and npm.
+- Git.
+- A PostgreSQL database, such as a Neon database.
+- A code editor, such as Visual Studio Code.
 
 ### 1. Clone the Repository
 
@@ -254,27 +358,29 @@ Create `backend/.env` for local configuration. To use Neon locally, configure `N
 
 The application uses these environment variable names:
 
-| Variable            | Purpose                                    |
-| ------------------- | ------------------------------------------ |
-| `NEON_DATABASE_URL` | Neon PostgreSQL connection string          |
-| `JWT_SECRET`        | Secret used to sign and verify JWTs        |
-| `DB_HOST`           | Local PostgreSQL host, when not using Neon |
-| `DB_PORT`           | Local PostgreSQL port, when not using Neon |
-| `DB_NAME`           | Local PostgreSQL database name             |
-| `DB_USER`           | Local PostgreSQL user                      |
-| `DB_PASSWORD`       | Local PostgreSQL password                  |
-| `ADMIN_EMAIL`       | Email for initial account creation         |
-| `ADMIN_PASSWORD`    | Password for initial account creation      |
+| Variable | Purpose |
+| --- | --- |
+| `NEON_DATABASE_URL` | Neon PostgreSQL connection string |
+| `JWT_SECRET` | Secret used to sign and verify JWTs |
+| `DB_HOST` | Local PostgreSQL host, when not using Neon |
+| `DB_PORT` | Local PostgreSQL port, when not using Neon |
+| `DB_NAME` | Local PostgreSQL database name |
+| `DB_USER` | Local PostgreSQL user |
+| `DB_PASSWORD` | Local PostgreSQL password |
+| `ADMIN_EMAIL` | Email for initial account creation |
+| `ADMIN_PASSWORD` | Password for initial account creation |
+| `ANALYST_EMAIL` | Email for Analyst account creation |
+| `ANALYST_PASSWORD` | Password for Analyst account creation |
 
 The database connection uses `NEON_DATABASE_URL` when it is configured; otherwise, it uses the individual `DB_*` settings.
 
-Use a strong administrator password of at least 12 characters and a securely generated JWT secret.
+Use strong, unique account passwords of at least 12 characters and a securely generated JWT secret.
 
 > Never commit `.env` files, passwords, connection strings, or JWT secrets. Configure production values separately in Vercel.
 
 ### 4. Prepare the Database
 
-From the `backend` directory, create the database tables if they do not already exist:
+From the `backend` directory, create the CDR table if it does not already exist:
 
 ```bash
 node create-table.js
@@ -286,15 +392,46 @@ Import the supplied dataset using the appropriate script for your configured dat
 node import-neon.js
 ```
 
-Create the initial user:
+Ensure the `users` table exists with the columns documented above, including `role`, before creating role-based accounts.
+
+For an existing database that does not yet have a `role` column, the migration used during development was:
+
+```sql
+ALTER TABLE users
+ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'analyst';
+```
+
+Assign the existing administrator account the `admin` role using its email address:
+
+```sql
+UPDATE users
+SET role = 'admin'
+WHERE email = '<existing-admin-email>';
+```
+
+Use your actual administrator email in your database management tool. Do not commit account credentials.
+
+### 5. Create Accounts
+
+Create the initial account using the configured `ADMIN_EMAIL` and `ADMIN_PASSWORD`:
 
 ```bash
 node create-user.js
 ```
 
-> Only run initial setup and import scripts against a database you intend to initialise. Check the existing records and user account before rerunning them.
+For a new installation, verify that the intended administrator account has the `admin` role. The existing `create-user.js` does not explicitly assign a role, so the database default is `analyst` until the role is updated.
 
-### 5. Start the Backend
+Create a separate Analyst account using `ANALYST_EMAIL` and `ANALYST_PASSWORD`:
+
+```bash
+node create-analyst.js
+```
+
+The Analyst creation script inserts the account with the `analyst` role.
+
+> Do not rerun account-creation scripts for emails that already exist. Check existing records before repeating setup or import operations.
+
+### 6. Start the Backend
 
 From the `backend` directory:
 
@@ -308,7 +445,7 @@ http://localhost:4000/api/health
 
 Keep the backend terminal running.
 
-### 6. Start the Frontend
+### 7. Start the Frontend
 
 Open a second terminal in the project root:
 
@@ -320,7 +457,28 @@ Open the URL shown by Vite, normally:
 
 http://localhost:5173
 
-Sign in using the account created in PostgreSQL. The frontend retrieves the CDR records using the JWT returned by the login endpoint.
+Sign in using either the Admin or Analyst account.
+
+- Admin loads the original dashboard and CDR records.
+- Analyst loads the view-only analytics page.
+
+## Local RBAC Verification
+
+The following checks have been completed locally:
+
+- [x] Existing account assigned the `admin` role.
+- [x] Admin login response includes `"role": "admin"`.
+- [x] Admin dashboard loads successfully.
+- [x] Separate Analyst account created.
+- [x] Analyst login response includes `"role": "analyst"`.
+- [x] Analyst request to `GET /api/cdr` returns HTTP 403 Forbidden.
+- [x] Analyst analytics page loads aggregated data.
+- [x] Analyst Log out button works.
+- [x] Admin dashboard and call-record functionality still work after frontend changes.
+
+The locally tested analytics page displayed 10,000 total calls, 5,061 incoming calls, and 4,939 outgoing calls.
+
+These checks confirm the tested local behaviour. Production RBAC verification remains pending.
 
 ## Production Build
 
@@ -348,23 +506,37 @@ https://cdr-analytics-dashboard-fullstack.vercel.app/
 
 The repository includes:
 
-* `api/index.js` as the Vercel API entry point.
-* `vercel.json` with Vite build settings and API rewrites.
-* A React frontend that uses relative `/api` URLs in production.
+- `api/index.js` as the Vercel API entry point.
+- `vercel.json` with Vite build settings and API rewrites.
+- A React frontend that uses relative `/api` URLs in production.
 
-The production environment is configured with `NEON_DATABASE_URL` and `JWT_SECRET` in Vercel's environment variable settings.
+The production environment uses `NEON_DATABASE_URL` and `JWT_SECRET` in Vercel's environment variable settings.
 
-### Deployment Verification
+### Earlier Deployment Verification
 
-The following checks have been completed:
+The following checks were completed for the earlier deployed version:
 
-* [x] Deploy the latest application to Vercel.
-* [x] Confirm that `/api/health` returns the Express health-check JSON.
-* [x] Test login on the deployed application.
-* [x] Confirm that the deployed application connects to its PostgreSQL database.
-* [x] Confirm that the dashboard loads successfully.
+- [x] Deploy the full-stack application to Vercel.
+- [x] Confirm `/api/health` returns the Express health-check JSON.
+- [x] Test login on the deployed application.
+- [x] Confirm the deployed application connects to PostgreSQL.
+- [x] Confirm the dashboard loads successfully.
 
-**Deployment status: Live and working.**
+### Latest RBAC Deployment Checklist
+
+Complete these checks after pushing the Admin/Analyst changes:
+
+- [ ] Run `npm run build` successfully.
+- [ ] Review `git status` and confirm no `.env` files or secrets are staged.
+- [ ] Commit and push the updated backend, frontend, Analyst creation script, and README.
+- [ ] Confirm the new Vercel deployment is Ready.
+- [ ] Verify production Admin login and dashboard access.
+- [ ] Verify production Analyst login and analytics access.
+- [ ] Verify production Analyst access to `/api/cdr` returns 403 Forbidden.
+- [ ] Verify all other protected routes have the intended role restrictions.
+- [ ] Verify logout for both roles.
+
+**Latest RBAC deployment status: Pending production verification.**
 
 ## GitHub Repository
 

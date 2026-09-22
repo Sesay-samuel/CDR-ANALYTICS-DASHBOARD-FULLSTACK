@@ -6,12 +6,14 @@ import CallRecordsPage from "./pages/CallRecordsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import Sidebar from "./components/Sidebar";
 
-import { fetchCDRRecords, loginUser } from "./services/cdrApi";
+import { fetchCDRRecords, fetchAnalyticsSummary, loginUser } from "./services/cdrApi";
 import { dateKey, getDirection, getStatus } from "./lib/callUtils";
 
 function App() {
   // Authentication
   const [token, setToken] = useState("");
+  const [role, setRole] = useState("");
+  const [analytics, setAnalytics] = useState(null);
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
@@ -44,7 +46,15 @@ function App() {
       const result = await loginUser(loginEmail, loginPassword);
 
       setLoginPassword("");
-      setToken(result.token);
+    const userRole = result.user?.role;
+
+    if (!["admin", "analyst"].includes(userRole)) {
+    throw new Error("Your account does not have a valid role.");
+        }
+
+setRole(userRole);
+setActivePage(userRole === "analyst" ? "Analytics" : "Dashboard");
+setToken(result.token);;
     } catch (err) {
       setLoginError(err.message || "Unable to log in.");
     } finally {
@@ -60,54 +70,74 @@ function App() {
     setLoginPassword("");
     setActivePage("Dashboard");
     setSidebarOpen(false);
+    setRole("");
+    setAnalytics(null);
   };
 
   // Fetch CDR records after login
-  useEffect(() => {
-    if (!token) {
-      return;
-    }
+                           
+useEffect(() => {
+  if (!token || !role) {
+    return;
+  }
 
-    let active = true;
+  let active = true;
 
-    const loadCDRRecords = async () => {
-      try {
-        setLoading(true);
-        setError("");
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      if (role === "analyst") {
+        // Analysts receive aggregated analytics, not raw CDR records.
+        setCalls([]);
+
+        const summary = await fetchAnalyticsSummary(token);
+
+        if (active) {
+          setAnalytics(summary);
+        }
+      } else {
+        // Preserve the existing Admin dashboard.
+        setAnalytics(null);
 
         const data = await fetchCDRRecords(token);
 
         if (active) {
           setCalls(data);
         }
-      } catch (err) {
-        if (active) {
-          const message = err.message || "Unable to load CDR data.";
+      }
+    } catch (err) {
+      if (active) {
+        const message = err.message || "Unable to load data.";
 
-          if (
-            message.includes("session is invalid") ||
-            message.includes("expired")
-          ) {
-            setToken("");
-            setCalls([]);
-            setLoginError(message);
-          } else {
-            setError(message);
-          }
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
+        if (
+          message.includes("session is invalid") ||
+          message.includes("expired")
+        ) {
+          setToken("");
+          setRole("");
+          setCalls([]);
+          setAnalytics(null);
+          setLoginError(message);
+        } else {
+          setError(message);
         }
       }
-    };
+    } finally {
+      if (active) {
+        setLoading(false);
+      }
+    }
+  };
 
-    loadCDRRecords();
+  loadData();
 
-    return () => {
-      active = false;
-    };
-  }, [token]);
+  return () => {
+    active = false;
+  };
+}, [token, role]);
+       
 
   // Apply search and filters
   const filteredCalls = useMemo(() => {
@@ -161,6 +191,85 @@ function App() {
   };
 
   // Render the selected dashboard page
+                              
+if (role === "analyst") {
+  if (!analytics) {
+    return <p className="text-slate-400">No analytics available.</p>;
+  }
+
+  return (
+    <section className="space-y-6">
+                                     
+<div className="flex items-center justify-between gap-4">
+  <span className="text-sm font-medium text-cyan-400">
+    Analyst · View-only access
+  </span>
+
+  <button
+    type="button"
+    onClick={handleLogout}
+    className="rounded-lg border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-200 hover:border-cyan-500 hover:text-cyan-400"
+  >
+    Log out
+  </button>
+</div>
+      <div>
+        <p className="text-sm font-semibold uppercase text-cyan-400">
+          Analyst · View-only analytics
+        </p>
+        <h1 className="mt-2 text-3xl font-bold">
+          Call Analytics
+        </h1>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
+          <p className="text-slate-400">Total Calls</p>
+          <p className="mt-2 text-3xl font-bold">
+            {analytics.totalCalls.toLocaleString()}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
+          <p className="text-slate-400">Total Duration (seconds)</p>
+          <p className="mt-2 text-3xl font-bold">
+            {analytics.totalDuration.toLocaleString()}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
+          <p className="text-slate-400">Incoming Calls</p>
+          <p className="mt-2 text-3xl font-bold">
+            {analytics.callTypeDistribution.incoming.toLocaleString()}
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
+          <p className="text-slate-400">Outgoing Calls</p>
+          <p className="mt-2 text-3xl font-bold">
+            {analytics.callTypeDistribution.outgoing.toLocaleString()}
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
+        <h2 className="mb-4 text-xl font-bold">Top Callers</h2>
+
+        <div className="space-y-3">
+          {analytics.topCallers.map((caller) => (
+            <div
+              key={caller.callerNumber}
+              className="flex justify-between border-b border-slate-800 pb-2"
+            >
+              <span>{caller.callerNumber}</span>
+              <span className="font-semibold">{caller.totalCalls}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
   const renderPage = () => {
     switch (activePage) {
       case "Call Records":
@@ -279,7 +388,7 @@ function App() {
         setSidebarOpen={setSidebarOpen}
       />
 
-      <main className="min-h-screen p-4 sm:p-6 lg:ml-60 lg:p-8 xl:p-10">
+      <main className={`min-h-screen p-4 sm:p-6 lg:p-8 xl:p-10 ${role === "admin" ? "lg:ml-60" : ""}`}>
         <div className="mb-4 flex justify-end">
           <button
             type="button"
