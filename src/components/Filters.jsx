@@ -1,3 +1,104 @@
-import { SlidersHorizontal, RotateCcw } from "lucide-react";
-function Filters({ directionFilter,setDirectionFilter,statusFilter,setStatusFilter,startDate,setStartDate,endDate,setEndDate,onReset }) { const field="mt-1.5 w-full rounded-xl border border-cyan-300/15 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100"; return <div className="glass-card grid gap-4 rounded-2xl p-4 md:grid-cols-2 xl:grid-cols-[auto_1fr_1fr_1fr_1fr_auto]"><div className="hidden h-10 w-10 self-end items-center justify-center rounded-xl bg-fuchsia-400/10 text-fuchsia-300 xl:flex"><SlidersHorizontal size={18}/></div><label className="text-xs font-semibold uppercase tracking-wide text-slate-400">Direction<select className={field} value={directionFilter} onChange={e=>setDirectionFilter(e.target.value)}><option value="all">All directions</option><option value="incoming">Incoming</option><option value="outgoing">Outgoing</option></select></label><label className="text-xs font-semibold uppercase tracking-wide text-slate-400">Status<select className={field} value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}><option value="all">All statuses</option><option value="successful">Successful</option><option value="failed">Failed</option></select></label><label className="text-xs font-semibold uppercase tracking-wide text-slate-400">From<input type="date" className={field} value={startDate} onChange={e=>setStartDate(e.target.value)}/></label><label className="text-xs font-semibold uppercase tracking-wide text-slate-400">To<input type="date" className={field} value={endDate} onChange={e=>setEndDate(e.target.value)}/></label><button className="flex self-end items-center justify-center gap-2 rounded-xl bg-[#07111f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700" onClick={onReset}><RotateCcw size={16}/>Reset</button></div>; }
+
+import {
+  SlidersHorizontal,
+  RotateCcw,
+} from "lucide-react";
+
+function Filters({
+  directionFilter,
+  setDirectionFilter,
+  statusFilter,
+  setStatusFilter,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  onReset,
+}) {
+  // Shared styling for select and date fields
+  const field =
+    "mt-1.5 w-full rounded-xl border border-cyan-300/15 bg-slate-950/70 px-3 py-2.5 text-sm text-slate-100 outline-none transition focus:border-violet-400 focus:ring-2 focus:ring-violet-100";
+
+  return (
+    <div className="glass-card grid gap-4 rounded-2xl p-4 md:grid-cols-2 xl:grid-cols-[auto_1fr_1fr_1fr_1fr_auto]">
+      {/* Filter icon */}
+      <div className="hidden h-10 w-10 self-end items-center justify-center rounded-xl bg-fuchsia-400/10 text-fuchsia-300 xl:flex">
+        <SlidersHorizontal size={18} />
+      </div>
+
+      {/* Direction filter */}
+      <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        Direction
+
+        <select
+          className={field}
+          value={directionFilter}
+          onChange={(event) =>
+            setDirectionFilter(event.target.value)
+          }
+        >
+          <option value="all">All directions</option>
+          <option value="incoming">Incoming</option>
+          <option value="outgoing">Outgoing</option>
+        </select>
+      </label>
+
+      {/* Status filter */}
+      <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        Status
+
+        <select
+          className={field}
+          value={statusFilter}
+          onChange={(event) =>
+            setStatusFilter(event.target.value)
+          }
+        >
+          <option value="all">All statuses</option>
+          <option value="successful">Successful</option>
+          <option value="failed">Failed</option>
+        </select>
+      </label>
+
+      {/* Start date filter */}
+      <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        From
+
+        <input
+          type="date"
+          className={field}
+          value={startDate}
+          onChange={(event) =>
+            setStartDate(event.target.value)
+          }
+        />
+      </label>
+
+      {/* End date filter */}
+      <label className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        To
+
+        <input
+          type="date"
+          className={field}
+          value={endDate}
+          onChange={(event) =>
+            setEndDate(event.target.value)
+          }
+        />
+      </label>
+
+      {/* Reset filters */}
+      <button
+        type="button"
+        className="flex self-end items-center justify-center gap-2 rounded-xl bg-[#07111f] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+        onClick={onReset}
+      >
+        <RotateCcw size={16} />
+        Reset
+      </button>
+    </div>
+  );
+}
+
 export default Filters;
