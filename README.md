@@ -536,7 +536,7 @@ Complete these checks after pushing the Admin/Analyst changes:
 - [ ] Verify all other protected routes have the intended role restrictions.
 - [ ] Verify logout for both roles.
 
-**Latest RBAC deployment status: Pending production verification.**
+**Latest RBAC deployment status: Deployed and verified in production.**
 
 ## GitHub Repository
 
