@@ -13,12 +13,16 @@ const PORT = process.env.PORT || 4000;
 // -----------------------------------------------------
 
 // Allow requests from the local React frontend.
+const CLIENT_ORIGIN =
+process.env.CLIENT_ORIGIN || "http://localhost:5173";
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: CLIENT_ORIGIN,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
-
 // Allow the server to read JSON requests.
 app.use(express.json());
 
@@ -26,11 +30,26 @@ app.use(express.json());
 // Public: Health check
 // -----------------------------------------------------
 
-app.get("/api/health", (req, res) => {
-  return res.status(200).json({
-    success: true,
-    message: "CDR Analytics Backend is running",
-  });
+  app.get("/api/health", async (req, res) => {
+  try {
+    await pool.query("SELECT 1");
+
+    return res.status(200).json({
+      success: true,
+      status: "healthy",
+      database: "connected",
+      message: "CDR Analytics Backend is running",
+    });
+  } catch (error) {
+    console.error("Health check failed:", error.message);
+
+    return res.status(503).json({
+      success: false,
+      status: "unhealthy",
+      database: "disconnected",
+      message: "Database connection unavailable",
+    });
+  }
 });
 
 // -----------------------------------------------------
