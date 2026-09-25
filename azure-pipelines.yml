@@ -1,0 +1,28 @@
+# Azure DevOps CI Pipeline
+# CDR Analytics Dashboard Backend
+
+trigger:
+  branches:
+    include:
+      - main
+      - feature/azure-devsecops
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: NodeTool@0
+  inputs:
+    versionSpec: '20.x'
+  displayName: 'Install Node.js'
+
+- script: npm ci
+  workingDirectory: backend
+  displayName: 'Install backend dependencies'
+
+- script: npm test
+  workingDirectory: backend
+  displayName: 'Run backend Jest tests'
+  env:
+    NODE_ENV: test
+    JWT_SECRET: azure-pipeline-test-jwt-secret
