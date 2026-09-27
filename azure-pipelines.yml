@@ -5,24 +5,35 @@ trigger:
   branches:
     include:
       - main
-      - feature/code-security-scanning
+      - feature/container-security-scanning
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-  # Install Node.js
+  # -----------------------------------------------------
+  # Node.js setup
+  # -----------------------------------------------------
+
   - task: UseNode@1
     inputs:
       version: '20.x'
     displayName: 'Install Node.js'
 
-  # Install backend dependencies
+
+  # -----------------------------------------------------
+  # Backend dependencies
+  # -----------------------------------------------------
+
   - script: npm ci
     workingDirectory: backend
     displayName: 'Install backend dependencies'
 
-  # Run backend automated tests
+
+  # -----------------------------------------------------
+  # Automated tests
+  # -----------------------------------------------------
+
   - script: npm test
     workingDirectory: backend
     displayName: 'Run backend Jest tests'
@@ -30,19 +41,25 @@ steps:
       NODE_ENV: test
       JWT_SECRET: azure-pipeline-test-jwt-secret
 
-  # Scan backend dependencies for known vulnerabilities
+
+  # -----------------------------------------------------
+  # Dependency vulnerability scanning
+  # -----------------------------------------------------
+
   - script: npm audit --audit-level=high
     workingDirectory: backend
     displayName: 'Security scan - backend dependencies'
 
-  # Install Semgrep static analysis scanner
+
+  # -----------------------------------------------------
+  # Static Application Security Testing (SAST)
+  # -----------------------------------------------------
+
   - script: |
       python -m pip install --upgrade pip
       python -m pip install semgrep
     displayName: 'Install Semgrep'
 
-  # Static Application Security Testing (SAST)
-  #
   # The Express CSRF middleware rule is excluded because this API
   # authenticates protected requests using explicit Authorization:
   # Bearer tokens rather than automatically attached authentication
@@ -52,3 +69,33 @@ steps:
         --exclude-rule javascript.express.security.audit.express-check-csurf-middleware-usage.express-check-csurf-middleware-usage \
         backend
     displayName: 'SAST - Semgrep code security scan'
+
+
+  # -----------------------------------------------------
+  # Build backend Docker image
+  # -----------------------------------------------------
+
+  - script: |
+      docker build \
+        --pull \
+        -t cdr-analytics-backend:$(Build.BuildId) \
+        ./backend
+    displayName: 'Build backend Docker image'
+
+
+  # -----------------------------------------------------
+  # Container vulnerability scanning
+  # -----------------------------------------------------
+
+  # Trivy exits with code 1 when a HIGH or CRITICAL
+  # vulnerability is detected, causing the pipeline to fail.
+  - script: |
+      docker run --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        aquasec/trivy:0.74.0 \
+        image \
+        --scanners vuln \
+        --exit-code 1 \
+        --severity HIGH,CRITICAL \
+        cdr-analytics-backend:$(Build.BuildId)
+    displayName: 'Container security scan - Trivy'
