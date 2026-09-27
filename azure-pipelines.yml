@@ -1,11 +1,11 @@
 # Azure DevOps CI Pipeline
-# CDR Analytics Dashboard Backend
+# CDR Analytics Dashboard Full-Stack Application
 
 trigger:
   branches:
     include:
       - main
-      - feature/code-coverage-quality-gates
+      - feature/build-deploy-automation
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -19,6 +19,24 @@ steps:
     inputs:
       version: '20.x'
     displayName: 'Install Node.js'
+
+
+  # -----------------------------------------------------
+  # Frontend dependencies
+  # -----------------------------------------------------
+
+  - script: npm ci
+    displayName: 'Install frontend dependencies'
+
+
+  # -----------------------------------------------------
+  # Frontend production build
+  # -----------------------------------------------------
+
+  # Build the Vite/React application exactly as it will be
+  # built for production. The pipeline fails if the build fails.
+  - script: npm run build
+    displayName: 'Build frontend production bundle'
 
 
   # -----------------------------------------------------
