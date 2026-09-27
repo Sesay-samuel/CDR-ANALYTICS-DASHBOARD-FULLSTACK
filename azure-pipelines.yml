@@ -5,7 +5,7 @@ trigger:
   branches:
     include:
       - main
-      - feature/container-security-scanning
+      - feature/code-coverage-quality-gates
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -31,12 +31,15 @@ steps:
 
 
   # -----------------------------------------------------
-  # Automated tests
+  # Automated tests and code coverage quality gate
   # -----------------------------------------------------
 
-  - script: npm test
+  # Jest generates the coverage report and exits with a
+  # non-zero status if coverage falls below the thresholds
+  # configured in backend/package.json.
+  - script: npm run test:coverage
     workingDirectory: backend
-    displayName: 'Run backend Jest tests'
+    displayName: 'Run backend tests and coverage quality gate'
     env:
       NODE_ENV: test
       JWT_SECRET: azure-pipeline-test-jwt-secret

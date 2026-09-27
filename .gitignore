@@ -35,3 +35,6 @@ backend/cdr-records-export.csv
 
 # Original CDR dataset
 backend/data/
+
+# Test coverage reports
+backend/coverage/
