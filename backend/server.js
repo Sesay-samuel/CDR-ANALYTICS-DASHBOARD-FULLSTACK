@@ -4,14 +4,25 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const pool = require("./db");
 
-const app = express(); // nosemgrep: javascript.express.security.audit.express-check-csrf-middleware-usage.express-check-csrf-middleware-usage
+// -----------------------------------------------------
+// Express application
+// -----------------------------------------------------
+
+// Authentication for protected routes uses explicit
+// Authorization: Bearer tokens instead of automatically
+// attached authentication cookies. Therefore, protected
+// API routes do not rely on cookie-based credentials.
+//
+// nosemgrep: javascript.express.security.audit.express-check-csrf-middleware-usage.express-check-csrf-middleware-usage
+const app = express();
+
 const PORT = process.env.PORT || 4000;
 
 // -----------------------------------------------------
 // Middleware
 // -----------------------------------------------------
 
-// Allow requests from the local React frontend.
+// Allow requests from the configured React frontend.
 const CLIENT_ORIGIN =
   process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
@@ -23,7 +34,7 @@ app.use(
   })
 );
 
-// Allow the server to read JSON requests.
+// Allow the server to read JSON request bodies.
 app.use(express.json());
 
 // -----------------------------------------------------
