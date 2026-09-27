@@ -1,11 +1,3 @@
-// -----------------------------------------------------
-// Test environment configuration
-// -----------------------------------------------------
-
-// Test-only secret.
-// Never use a real production JWT secret in test source code.
-process.env.JWT_SECRET = "test-jwt-secret-for-automated-testing-only";
-
 const request = require("supertest");
 const jwt = require("jsonwebtoken");
 
@@ -34,8 +26,7 @@ describe("JWT authentication and RBAC", () => {
   // ---------------------------------------------------
 
   test("returns 401 when no JWT is provided", async () => {
-    const response = await request(app)
-      .get("/api/analytics/summary");
+    const response = await request(app).get("/api/analytics/summary");
 
     expect(response.statusCode).toBe(401);
 
@@ -183,55 +174,56 @@ describe("JWT authentication and RBAC", () => {
       });
     }
   );
-                                 // ---------------------------------------------------
-// Test 5: Admin can access admin-only CDR data
-// ---------------------------------------------------
 
-test("allows an admin to access admin-only CDR data", async () => {
-  // Create a valid JWT for admin user ID 1.
-  const token = jwt.sign(
-    { sub: "1" },
-    process.env.JWT_SECRET,
-    {
-      algorithm: "HS256",
-      expiresIn: "1h",
-    }
-  );
+  // ---------------------------------------------------
+  // Test 5: Admin can access admin-only CDR data
+  // ---------------------------------------------------
 
-  // Database call 1:
-  // requireAuth() looks up the authenticated user.
-  pool.query.mockResolvedValueOnce({
-    rows: [
+  test("allows an admin to access admin-only CDR data", async () => {
+    // Create a valid JWT for admin user ID 1.
+    const token = jwt.sign(
+      { sub: "1" },
+      process.env.JWT_SECRET,
       {
-        id: 1,
-        role: "admin",
-      },
-    ],
+        algorithm: "HS256",
+        expiresIn: "1h",
+      }
+    );
+
+    // Database call 1:
+    // requireAuth() looks up the authenticated user.
+    pool.query.mockResolvedValueOnce({
+      rows: [
+        {
+          id: 1,
+          role: "admin",
+        },
+      ],
+    });
+
+    // Database call 2:
+    // /api/cdr retrieves the CDR records.
+    pool.query.mockResolvedValueOnce({
+      rows: [
+        {
+          id: 1001,
+          callerNumber: "07123456789",
+          receiverNumber: "07987654321",
+          callStatus: true,
+          city: "London",
+        },
+      ],
+    });
+
+    // Admin attempts to access the admin-only CDR endpoint.
+    const response = await request(app)
+      .get("/api/cdr")
+      .set("Authorization", `Bearer ${token}`);
+
+    // RBAC should allow the admin through.
+    expect(response.statusCode).toBe(200);
+
+    // Confirm that the endpoint returned a response body.
+    expect(response.body).toBeDefined();
   });
-
-  // Database call 2:
-  // /api/cdr retrieves the CDR records.
-  pool.query.mockResolvedValueOnce({
-    rows: [
-      {
-        id: 1001,
-        callerNumber: "07123456789",
-        receiverNumber: "07987654321",
-        callStatus: true,
-        city: "London",
-      },
-    ],
-  });
-
-  // Admin attempts to access the admin-only CDR endpoint.
-  const response = await request(app)
-    .get("/api/cdr")
-    .set("Authorization", `Bearer ${token}`);
-
-  // RBAC should allow the admin through.
-  expect(response.statusCode).toBe(200);
-
-  // Confirm that the endpoint returned a response body.
-  expect(response.body).toBeDefined();
-});
 });
