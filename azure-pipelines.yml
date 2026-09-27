@@ -42,6 +42,13 @@ steps:
     displayName: 'Install Semgrep'
 
   # Static Application Security Testing (SAST)
+  #
+  # The Express CSRF middleware rule is excluded because this API
+  # authenticates protected requests using explicit Authorization:
+  # Bearer tokens rather than automatically attached authentication
+  # cookies. All other Semgrep auto security rules remain enabled.
   - script: |
-      semgrep scan --config auto --error backend
+      semgrep scan --config auto --error \
+        --exclude-rule javascript.express.security.audit.express-check-csurf-middleware-usage.express-check-csurf-middleware-usage \
+        backend
     displayName: 'SAST - Semgrep code security scan'
