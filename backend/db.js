@@ -23,7 +23,7 @@ if (NEON_DATABASE_URL) {
   pool = new Pool({
     connectionString: NEON_DATABASE_URL,
     ssl: {
-      rejectUnauthorized: false,
+      rejectUnauthorized: true,
     },
   });
 } else {
