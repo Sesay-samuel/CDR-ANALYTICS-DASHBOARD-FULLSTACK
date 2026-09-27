@@ -5,7 +5,7 @@ trigger:
   branches:
     include:
       - main
-      - feature/pipeline-modernization
+      - feature/code-security-scanning
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -34,3 +34,14 @@ steps:
   - script: npm audit --audit-level=high
     workingDirectory: backend
     displayName: 'Security scan - backend dependencies'
+
+  # Install Semgrep static analysis scanner
+  - script: |
+      python -m pip install --upgrade pip
+      python -m pip install semgrep
+    displayName: 'Install Semgrep'
+
+  # Static Application Security Testing (SAST)
+  - script: |
+      semgrep scan --config auto --error backend
+    displayName: 'SAST - Semgrep code security scan'
