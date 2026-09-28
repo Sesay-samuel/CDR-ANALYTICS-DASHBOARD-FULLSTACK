@@ -1,10 +1,14 @@
 const { app } = require("@azure/functions");
+const {
+  sendServiceBusMessage,
+} = require("../services/serviceBus");
 
 /**
  * Azure Function: cdrAnalytics
  *
- * Accepts an array of Call Detail Records (CDRs) and calculates
- * summary analytics.
+ * Accepts an array of Call Detail Records (CDRs), calculates
+ * summary analytics, and publishes the analytics result to
+ * Azure Service Bus.
  *
  * POST /api/cdrAnalytics
  *
@@ -80,16 +84,32 @@ app.http("cdrAnalytics", {
 
       const averageDuration = totalDuration / records.length;
 
+      const analytics = {
+        totalCalls: records.length,
+        totalDuration,
+        averageDuration: Number(averageDuration.toFixed(2)),
+        completedCalls,
+        failedCalls,
+      };
+
+      context.log(
+        `Publishing CDR analytics to Azure Service Bus. Total calls: ${analytics.totalCalls}`
+      );
+
+      const serviceBusResult = await sendServiceBusMessage(analytics);
+
+      context.log(
+        `CDR analytics published to Service Bus queue: ${serviceBusResult.queueName}`
+      );
+
       return {
         status: 200,
         jsonBody: {
           success: true,
-          analytics: {
-            totalCalls: records.length,
-            totalDuration,
-            averageDuration: Number(averageDuration.toFixed(2)),
-            completedCalls,
-            failedCalls,
+          analytics,
+          messaging: {
+            published: true,
+            queueName: serviceBusResult.queueName,
           },
         },
       };
@@ -100,7 +120,7 @@ app.http("cdrAnalytics", {
         status: 400,
         jsonBody: {
           success: false,
-          message: "Invalid JSON request body.",
+          message: "CDR analytics processing failed.",
         },
       };
     }
