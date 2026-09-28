@@ -38,3 +38,10 @@ backend/data/
 
 # Test coverage reports
 backend/coverage/
+
+# Azurite local storage emulator artifacts
+AzuriteConfig
+__blobstorage__/
+__queuestorage__/
+__tablestorage__/
+__azurite_db*.json
