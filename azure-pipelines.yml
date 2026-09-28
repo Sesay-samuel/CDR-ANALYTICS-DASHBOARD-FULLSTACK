@@ -5,7 +5,7 @@ trigger:
   branches:
     include:
       - main
-      - feature/azure-functions
+      - feature/azure-service-bus
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -77,7 +77,8 @@ steps:
   # -----------------------------------------------------
 
   # Run programmatic Jest tests for the cdrAnalytics
-  # Azure Function. The pipeline fails if any test fails.
+  # Azure Function and Azure Service Bus integration.
+  # The pipeline fails if any test fails.
   - script: npm test
     workingDirectory: azure-functions
     displayName: 'Run Azure Functions automated tests'
