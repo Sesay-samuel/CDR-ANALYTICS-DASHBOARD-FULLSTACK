@@ -5,7 +5,7 @@ trigger:
   branches:
     include:
       - main
-      - feature/build-deploy-automation
+      - feature/azure-functions
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -49,7 +49,7 @@ steps:
 
 
   # -----------------------------------------------------
-  # Automated tests and code coverage quality gate
+  # Backend automated tests and code coverage quality gate
   # -----------------------------------------------------
 
   # Jest generates the coverage report and exits with a
@@ -64,12 +64,36 @@ steps:
 
 
   # -----------------------------------------------------
+  # Azure Functions dependencies
+  # -----------------------------------------------------
+
+  - script: npm ci
+    workingDirectory: azure-functions
+    displayName: 'Install Azure Functions dependencies'
+
+
+  # -----------------------------------------------------
+  # Azure Functions automated tests
+  # -----------------------------------------------------
+
+  # Run programmatic Jest tests for the cdrAnalytics
+  # Azure Function. The pipeline fails if any test fails.
+  - script: npm test
+    workingDirectory: azure-functions
+    displayName: 'Run Azure Functions automated tests'
+
+
+  # -----------------------------------------------------
   # Dependency vulnerability scanning
   # -----------------------------------------------------
 
   - script: npm audit --audit-level=high
     workingDirectory: backend
     displayName: 'Security scan - backend dependencies'
+
+  - script: npm audit --audit-level=high
+    workingDirectory: azure-functions
+    displayName: 'Security scan - Azure Functions dependencies'
 
 
   # -----------------------------------------------------
@@ -88,7 +112,7 @@ steps:
   - script: |
       semgrep scan --config auto --error \
         --exclude-rule javascript.express.security.audit.express-check-csurf-middleware-usage.express-check-csurf-middleware-usage \
-        backend
+        backend azure-functions
     displayName: 'SAST - Semgrep code security scan'
 
 
