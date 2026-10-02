@@ -1,0 +1,13 @@
+# .NET build output
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Test results and coverage
+TestResults/
+coverage/
+*.trx
